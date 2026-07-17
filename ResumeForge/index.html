@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeForge — AI-Powered Resume Analysis</title>
+  <meta name="description" content="Get instant AI-powered feedback on your resume. Improve your ATS score, fix skill gaps, and land more interviews with ResumeForge." />
+  <meta name="keywords" content="resume analysis, ATS score, resume optimization, job application, AI resume" />
+  <meta property="og:title" content="ResumeForge — AI-Powered Resume Analysis" />
+  <meta property="og:description" content="Upload your resume and get instant AI feedback, ATS scoring, and actionable improvements." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="shortcut icon" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Landing-specific micro styles */
+    .nav-link {
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-medium);
+      color: var(--txt-secondary);
+      padding: 0.3rem 0.6rem;
+      border-radius: var(--r-sm);
+      transition: color var(--t-fast) var(--ease-out);
+    }
+    .nav-link:hover { color: var(--txt-primary); }
+
+    .floating-card {
+      position: absolute;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--r-xl);
+      padding: var(--sp-4);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(20px);
+      pointer-events: none;
+    }
+    .fc-ats {
+      bottom: 12%;
+      left: -8%;
+      width: 170px;
+      animation: float-a 4s ease-in-out infinite;
+    }
+    .fc-skill {
+      top: 20%;
+      right: -6%;
+      width: 185px;
+      animation: float-b 5s ease-in-out infinite;
+    }
+    @keyframes float-a {
+      0%,100%{transform:translateY(0px) rotate(-2deg)}
+      50%{transform:translateY(-12px) rotate(-2deg)}
+    }
+    @keyframes float-b {
+      0%,100%{transform:translateY(0px) rotate(2deg)}
+      50%{transform:translateY(-16px) rotate(2deg)}
+    }
+
+    .resume-mockup {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: var(--sp-12) auto 0;
+      perspective: 1200px;
+      animation: fade-up 0.8s var(--ease-spring) 0.35s both;
+    }
+    .resume-doc {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      position: relative;
+      z-index: 1;
+      transform: rotateX(4deg);
+    }
+    .doc-line {
+      height: 8px;
+      border-radius: var(--r-full);
+      background: var(--border-subtle);
+      margin-bottom: var(--sp-3);
+    }
+    .doc-line-short { width: 45%; }
+    .doc-line-name   { width: 60%; height: 14px; background: linear-gradient(90deg, var(--clr-primary-20), var(--clr-accent-10)); }
+    .doc-line-group  { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .doc-chip        { height: 20px; width: 80px; border-radius: var(--r-full); background: var(--clr-primary-10); border: 1px solid var(--clr-primary-20); }
+    .doc-section-hdr { height: 10px; width: 120px; background: var(--clr-primary-10); border-radius: var(--r-sm); margin-bottom: var(--sp-3); margin-top: var(--sp-5); }
+    .doc-stars       { display:flex; gap:4px; margin-top: var(--sp-2); }
+    .doc-star        { width:14px; height:14px; border-radius:2px; background:var(--clr-warning); opacity:0.7; }
+
+    .score-badge {
+      position: absolute;
+      top: -16px; right: 20px;
+      background: var(--gradient-primary);
+      color: white;
+      border-radius: var(--r-xl);
+      padding: var(--sp-3) var(--sp-4);
+      font-family: var(--font-display);
+      font-weight: var(--fw-extrabold);
+      font-size: var(--fs-lg);
+      box-shadow: var(--shadow-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      white-space: nowrap;
+      z-index: 2;
+    }
+    .score-badge-label { font-size: var(--fs-xs); font-weight: var(--fw-normal); opacity: 0.85; }
+
+    .fc-label { font-size: var(--fs-xs); font-weight: var(--fw-semibold); color: var(--txt-muted); margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: 0.06em; }
+    .fc-value { font-size: var(--fs-xl); font-weight: var(--fw-extrabold); margin-bottom: var(--sp-2); }
+    .fc-bar { height: 6px; background: var(--border-subtle); border-radius: var(--r-full); overflow: hidden; }
+    .fc-fill { height: 100%; border-radius: var(--r-full); }
+    .fc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .fc-tag { font-size: 10px; padding: 2px 6px; border-radius: 20px; font-weight: 600; }
+    .fc-tag-miss { background: var(--clr-danger-bg); color: var(--clr-danger); }
+    .fc-tag-ok   { background: var(--clr-success-bg); color: var(--clr-success); }
+
+    /* Testimonials */
+    .testimonials { padding: var(--sp-24) 0; background: var(--bg-surface); }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-5); }
+    .testimonial-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--r-xl); padding: var(--sp-6); transition: all var(--t-normal) var(--ease-out); }
+    .testimonial-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .testimonial-stars { display: flex; gap: 3px; margin-bottom: var(--sp-4); }
+    .testimonial-star { color: var(--clr-warning); font-size: 14px; }
+    .testimonial-text { color: var(--txt-secondary); font-size: var(--fs-sm); line-height: 1.7; margin-bottom: var(--sp-5); font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: var(--sp-3); }
+    .testimonial-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: var(--fw-bold); color: white; font-size: var(--fs-base); flex-shrink: 0; }
+    .testimonial-name { font-weight: var(--fw-semibold); font-size: var(--fs-sm); }
+    .testimonial-role { font-size: var(--fs-xs); color: var(--txt-muted); }
+
+    @media (max-width: 768px) {
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .resume-mockup { display: none; }
+      .fc-ats, .fc-skill { display: none; }
+    }
+    @media (max-width: 900px) {
+      .testimonials-grid { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ NAVBAR ═══════════════ -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <div class="navbar-inner">
+        <a href="index.html" class="navbar-brand" aria-label="ResumeForge home">
+          <img src="logo.png" alt="ResumeForge" class="brand-logo-img" aria-hidden="true" />
+          <span class="brand-name">ResumeForge</span>
+        </a>
+
+        <div class="navbar-actions">
+          <nav class="flex gap-4" style="margin-right: var(--sp-2);" aria-label="Page links">
+            <a href="#features"   class="nav-link">Features</a>
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+          </nav>
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode" title="Toggle theme">
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+          <a href="app.html" class="btn btn-primary btn-sm" id="nav-cta">Analyze Resume</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="hero-grid"></div>
+      <div class="hero-glow-1"></div>
+      <div class="hero-glow-2"></div>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-eyebrow" aria-label="AI-Powered Analysis">
+          <span class="dot" aria-hidden="true"></span>
+          AI-Powered Resume Analysis
+        </div>
+
+        <h1 class="hero-title font-display" id="hero-title">
+          Get Your Resume<br/>
+          <span class="gradient-text">Interview-Ready</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Upload your resume and receive an instant AI-generated analysis — ATS score, skill gaps, keyword insights, grammar feedback, and actionable improvements. Land more interviews.
+        </p>
+
+        <div class="hero-cta">
+          <a href="app.html" class="btn btn-primary btn-xl" id="hero-cta-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Analyze My Resume — Free
+          </a>
+          <a href="#how-it-works" class="btn btn-secondary btn-xl" id="hero-cta-secondary">See How It Works</a>
+        </div>
+
+        <!-- Resume Mockup -->
+        <div class="resume-mockup" aria-hidden="true">
+          <div class="score-badge">
+            <span>87</span>
+            <span class="score-badge-label">ATS Score</span>
+          </div>
+          <div class="resume-doc">
+            <div class="doc-line doc-line-name"></div>
+            <div class="doc-line doc-line-short"></div>
+            <div class="doc-line-group">
+              <div class="doc-chip"></div>
+              <div class="doc-chip" style="width:60px"></div>
+              <div class="doc-chip" style="width:70px"></div>
+            </div>
+            <div class="doc-section-hdr"></div>
+            <div class="doc-line" style="width:95%"></div>
+            <div class="doc-line" style="width:88%"></div>
+            <div class="doc-line" style="width:72%"></div>
+            <div class="doc-section-hdr"></div>
+            <div class="doc-line" style="width:90%"></div>
+            <div class="doc-line" style="width:80%"></div>
+            <div class="doc-section-hdr"></div>
+            <div class="doc-line-group">
+              <div class="doc-chip" style="width:90px;background:var(--clr-success-bg);border-color:var(--clr-success-border)"></div>
+              <div class="doc-chip" style="width:75px;background:var(--clr-success-bg);border-color:var(--clr-success-border)"></div>
+              <div class="doc-chip" style="width:60px;background:var(--clr-info-bg);border-color:var(--clr-info-border)"></div>
+            </div>
+          </div>
+
+          <!-- Floating cards -->
+          <div class="floating-card fc-ats">
+            <div class="fc-label">ATS Match</div>
+            <div class="fc-value gradient-text">87%</div>
+            <div class="fc-bar"><div class="fc-fill" style="width:87%;background:var(--gradient-primary)"></div></div>
+          </div>
+          <div class="floating-card fc-skill">
+            <div class="fc-label">Missing Keywords</div>
+            <div class="fc-tags">
+              <span class="fc-tag fc-tag-miss">Docker</span>
+              <span class="fc-tag fc-tag-miss">Kubernetes</span>
+              <span class="fc-tag fc-tag-ok">React</span>
+              <span class="fc-tag fc-tag-ok">Python</span>
+              <span class="fc-tag fc-tag-miss">CI/CD</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats" aria-label="Platform statistics">
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-resumes">0</div>
+            <div class="hero-stat-label">Resumes Analyzed</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-ats">0%</div>
+            <div class="hero-stat-label">Avg ATS Improvement</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-interviews">0%</div>
+            <div class="hero-stat-label">More Interviews</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FEATURES ═══════════════ -->
+  <section class="features" id="features" aria-labelledby="features-title">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Everything You Need</div>
+        <h2 class="section-title font-display" id="features-title">
+          A Complete Resume<br/><span class="gradient-text">Intelligence Suite</span>
+        </h2>
+        <p class="section-desc">Every analysis dimension a recruiter cares about, distilled into clear, actionable insights.</p>
+      </div>
+
+      <div class="features-grid">
+
+        <article class="feature-card reveal" aria-label="ATS Score feature">
+          <div class="feature-icon" style="background:var(--clr-primary-10);color:var(--clr-primary-light)">📊</div>
+          <h3 class="feature-title">ATS Score & Grade</h3>
+          <p class="feature-desc">See exactly how Applicant Tracking Systems score your resume. Our algorithm mirrors real ATS parsers to give you an accurate compatibility rating.</p>
+        </article>
+
+        <article class="feature-card reveal delay-100" aria-label="Skill Gap Analysis feature">
+          <div class="feature-icon" style="background:var(--clr-danger-bg);color:var(--clr-danger)">🎯</div>
+          <h3 class="feature-title">Skill Gap Analysis</h3>
+          <p class="feature-desc">Discover which in-demand skills are missing from your resume. Targeted recommendations show you exactly what to add to stand out in your field.</p>
+        </article>
+
+        <article class="feature-card reveal delay-200" aria-label="Keyword Intelligence feature">
+          <div class="feature-icon" style="background:var(--clr-success-bg);color:var(--clr-success)">🔑</div>
+          <h3 class="feature-title">Keyword Intelligence</h3>
+          <p class="feature-desc">Identify which industry keywords are present or missing. Optimize your resume with the exact terms recruiters and ATS systems look for.</p>
+        </article>
+
+        <article class="feature-card reveal delay-300" aria-label="Strengths & Weaknesses feature">
+          <div class="feature-icon" style="background:var(--clr-warning-bg);color:var(--clr-warning)">⚡</div>
+          <h3 class="feature-title">Strengths & Weaknesses</h3>
+          <p class="feature-desc">Get a balanced breakdown of what you're doing right and where you can improve. Prioritized insights for maximum interview impact.</p>
+        </article>
+
+        <article class="feature-card reveal delay-100" aria-label="Grammar & Formatting feature">
+          <div class="feature-icon" style="background:var(--clr-info-bg);color:var(--clr-info)">✏️</div>
+          <h3 class="feature-title">Grammar & Formatting</h3>
+          <p class="feature-desc">Surface grammar errors, inconsistent tense, weak action verbs, and formatting issues with specific line-level suggestions for each problem.</p>
+        </article>
+
+        <article class="feature-card reveal delay-200" aria-label="Recruiter Feedback feature">
+          <div class="feature-icon" style="background:var(--gradient-primary);color:white">💬</div>
+          <h3 class="feature-title">Recruiter Feedback</h3>
+          <p class="feature-desc">Simulated feedback from an experienced recruiter perspective — tone, clarity, impact scores, and a candid professional assessment.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+  <section class="how-it-works" id="how-it-works" aria-labelledby="hiw-title">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Simple & Fast</div>
+        <h2 class="section-title font-display" id="hiw-title">
+          Insights in <span class="gradient-text">Under 30 Seconds</span>
+        </h2>
+        <p class="section-desc">Three steps from upload to a complete professional analysis of your resume.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-number" aria-hidden="true">1</div>
+          <h3 class="step-title">Upload Your Resume</h3>
+          <p class="step-desc">Drag and drop or click to upload your resume in PDF or DOCX format. Optionally specify your target job role for a tailored analysis.</p>
+        </div>
+        <div class="step-card reveal delay-200">
+          <div class="step-number" aria-hidden="true">2</div>
+          <h3 class="step-title">AI Processes It</h3>
+          <p class="step-desc">Our AI engine parses your resume, checks ATS compatibility, evaluates skills, scans keywords, and reviews grammar in seconds.</p>
+        </div>
+        <div class="step-card reveal delay-400">
+          <div class="step-number" aria-hidden="true">3</div>
+          <h3 class="step-title">Review & Improve</h3>
+          <p class="step-desc">Explore your personalized dashboard with visual scores, detailed feedback, and specific actionable improvements. Download the report as PDF.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TESTIMONIALS ═══════════════ -->
+  <section class="testimonials" aria-labelledby="testimonials-title">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Success Stories</div>
+        <h2 class="section-title font-display" id="testimonials-title">
+          Loved by <span class="gradient-text">Job Seekers</span>
+        </h2>
+      </div>
+      <div class="testimonials-grid">
+        <article class="testimonial-card reveal">
+          <div class="testimonial-stars" aria-label="5 out of 5 stars">
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <p class="testimonial-text">"My ATS score went from 54 to 89 after following the recommendations. Got 3 interview calls the very next week. The keyword analysis alone was worth it."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:var(--gradient-primary)" aria-hidden="true">S</div>
+            <div>
+              <div class="testimonial-name">Sarah Mitchell</div>
+              <div class="testimonial-role">Software Engineer → Google</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="testimonial-card reveal delay-200">
+          <div class="testimonial-stars" aria-label="5 out of 5 stars">
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <p class="testimonial-text">"The recruiter feedback section was eye-opening. It pointed out that my summary was too generic and showed me how to make it compelling. Landed my dream product role."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)" aria-hidden="true">J</div>
+            <div>
+              <div class="testimonial-name">James Okafor</div>
+              <div class="testimonial-role">Product Manager → Stripe</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="testimonial-card reveal delay-400">
+          <div class="testimonial-stars" aria-label="5 out of 5 stars">
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span><span class="testimonial-star" aria-hidden="true">★</span>
+            <span class="testimonial-star" aria-hidden="true">★</span>
+          </div>
+          <p class="testimonial-text">"I was applying for 3 months with zero callbacks. ResumeForge showed me I was missing critical DevOps keywords. Added them, and calls started coming within days."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#10b981,#06b6d4)" aria-hidden="true">P</div>
+            <div>
+              <div class="testimonial-name">Priya Sharma</div>
+              <div class="testimonial-role">DevOps Engineer → AWS</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CTA ═══════════════ -->
+  <section class="cta-section" aria-labelledby="cta-title">
+    <div class="container">
+      <div class="cta-card">
+        <h2 class="cta-title font-display" id="cta-title">Ready to Land More Interviews?</h2>
+        <p class="cta-desc">Join thousands of job seekers who improved their resumes with ResumeForge. Free, instant, and comprehensive.</p>
+        <a href="app.html" class="btn btn-white btn-xl" id="cta-main-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Analyze My Resume — It's Free
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        <a href="index.html" class="navbar-brand" style="text-decoration:none" aria-label="ResumeForge home">
+          <img src="logo.png" alt="ResumeForge" class="brand-logo-img" aria-hidden="true" />
+          <span class="brand-name">ResumeForge</span>
+        </a>
+        <p class="text-muted text-sm">© 2026 ResumeForge. Built to help you get hired.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="landing.js"></script>
+</body>
+</html>

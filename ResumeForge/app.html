@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeForge — Analyze Your Resume</title>
+  <meta name="description" content="Upload your resume and get an instant AI-powered analysis with ATS score, skill gap insights, and actionable improvements." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="shortcut icon" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo-icon.png" />
+  <style>
+    /* ── App-specific overrides ── */
+    .card-header-icon {
+      width: 32px; height: 32px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .card-title {
+      font-size: var(--fs-base);
+      font-weight: var(--fw-semibold);
+    }
+
+    /* Score hero container */
+    .ats-label {
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--txt-muted);
+      text-align: center;
+    }
+
+    /* Keyword density bar */
+    .keyword-density-wrap { margin-bottom: var(--sp-5); }
+
+    /* Improvement priority */
+    .priority-high   { background:var(--clr-danger-bg);  color:var(--clr-danger); }
+    .priority-medium { background:var(--clr-warning-bg); color:var(--clr-warning); }
+    .priority-low    { background:var(--clr-info-bg);    color:var(--clr-info); }
+
+    /* Analyze again btn */
+    .analyze-again-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-6) 0 var(--sp-4);
+    }
+
+    /* Nav mobile collapse */
+    @media (max-width: 480px) {
+      .results-file-name { max-width: 160px; }
+    }
+  </style>
+</head>
+<body class="app-page">
+
+  <!-- ═══════════════ NAVBAR ═══════════════ -->
+  <nav class="navbar scrolled" id="navbar" role="navigation" aria-label="Application navigation">
+    <div class="container">
+      <div class="navbar-inner">
+        <a href="index.html" class="navbar-brand" aria-label="ResumeForge home">
+          <img src="logo.png" alt="ResumeForge" class="brand-logo-img" aria-hidden="true" />
+          <span class="brand-name">ResumeForge</span>
+        </a>
+        <div class="navbar-actions">
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode" title="Toggle theme">
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ UPLOAD SCREEN ═══════════════ -->
+  <section class="upload-screen" id="upload-screen" role="main" aria-labelledby="upload-title">
+    <div class="upload-wrapper animate-fade-up">
+      <div class="upload-header">
+        <h1 class="upload-title font-display gradient-text" id="upload-title">Analyze Your Resume</h1>
+        <p class="upload-subtitle">Upload your resume and get instant AI-powered insights in seconds</p>
+      </div>
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="drop-zone" role="button" tabindex="0"
+           aria-label="Upload resume file. Drag and drop or click to select."
+           aria-describedby="drop-zone-desc">
+        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt"
+               aria-label="Resume file upload" />
+
+        <!-- Default state -->
+        <div class="drop-zone-default">
+          <div class="drop-zone-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="drop-zone-title">Drop your resume here</p>
+          <p class="drop-zone-subtitle" id="drop-zone-desc">or click to browse your files</p>
+          <div class="drop-zone-formats">
+            <span class="badge badge-muted">PDF</span>
+            <span class="badge badge-muted">DOC</span>
+            <span class="badge badge-muted">DOCX</span>
+            <span class="badge badge-muted">TXT</span>
+          </div>
+        </div>
+
+        <!-- File selected state -->
+        <div class="file-info" id="file-info" aria-live="polite">
+          <div class="file-info-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <polyline points="9 15 11 17 15 13"/>
+            </svg>
+          </div>
+          <span class="file-info-name" id="file-name-display">filename.pdf</span>
+          <span class="file-info-size" id="file-size-display">0 KB</span>
+          <span class="badge badge-success">✓ File Ready</span>
+        </div>
+      </div>
+
+      <!-- Job Role Input -->
+      <div class="upload-options">
+        <div class="form-group">
+          <label for="job-role" class="form-label">Target Job Role <span style="color:var(--txt-muted);font-weight:400">(optional)</span></label>
+          <select id="job-role" class="form-input" aria-label="Select your target job role">
+            <option value="">General / Not specified</option>
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="Frontend Developer">Frontend Developer</option>
+            <option value="Backend Developer">Backend Developer</option>
+            <option value="Full Stack Developer">Full Stack Developer</option>
+            <option value="Data Scientist">Data Scientist</option>
+            <option value="Machine Learning Engineer">Machine Learning Engineer</option>
+            <option value="DevOps Engineer">DevOps Engineer</option>
+            <option value="Product Manager">Product Manager</option>
+            <option value="UX/UI Designer">UX/UI Designer</option>
+            <option value="Data Analyst">Data Analyst</option>
+            <option value="Cloud Architect">Cloud Architect</option>
+            <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
+            <option value="Business Analyst">Business Analyst</option>
+            <option value="Marketing Manager">Marketing Manager</option>
+            <option value="Project Manager">Project Manager</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-xl" id="analyze-btn" style="width:100%" disabled
+              aria-label="Start resume analysis">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Analyze My Resume
+      </button>
+
+      <p class="text-muted text-sm" style="text-align:center;margin-top:var(--sp-4)">
+        🔒 Your resume is processed locally and never stored on any server.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PROCESSING SCREEN ═══════════════ -->
+  <section class="processing-screen hidden" id="processing-screen" aria-labelledby="processing-title" aria-live="polite">
+    <div class="processing-wrapper">
+      <div class="processing-animation" aria-hidden="true">
+        <div class="proc-ring proc-ring-1"></div>
+        <div class="proc-ring proc-ring-2"></div>
+        <div class="proc-ring proc-ring-3"></div>
+        <div class="proc-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+      </div>
+
+      <h2 class="processing-title font-display" id="processing-title">Analyzing Your Resume</h2>
+      <p class="processing-subtitle" id="processing-status">Scanning document structure…</p>
+
+      <div class="processing-progress">
+        <div class="processing-progress-bar">
+          <div class="processing-progress-fill" id="processing-progress-fill"></div>
+        </div>
+        <div class="processing-progress-label" id="processing-progress-label">0% complete</div>
+      </div>
+
+      <div class="processing-steps" role="list" aria-label="Analysis steps">
+        <div class="proc-step" id="step-0" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">📄</div>
+          <span class="proc-step-text">Parsing document & extracting content</span>
+        </div>
+        <div class="proc-step" id="step-1" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">🤖</div>
+          <span class="proc-step-text">Running ATS compatibility check</span>
+        </div>
+        <div class="proc-step" id="step-2" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">🎯</div>
+          <span class="proc-step-text">Analyzing skills & keyword density</span>
+        </div>
+        <div class="proc-step" id="step-3" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">✏️</div>
+          <span class="proc-step-text">Reviewing grammar & formatting</span>
+        </div>
+        <div class="proc-step" id="step-4" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">💬</div>
+          <span class="proc-step-text">Generating recruiter feedback</span>
+        </div>
+        <div class="proc-step" id="step-5" role="listitem">
+          <div class="proc-step-icon" aria-hidden="true">✨</div>
+          <span class="proc-step-text">Compiling improvement recommendations</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ RESULTS SCREEN ═══════════════ -->
+  <div class="results-screen hidden" id="results-screen">
+
+    <!-- Sticky Results Header -->
+    <header class="results-header" role="banner" aria-label="Analysis results header">
+      <div class="container">
+        <div class="results-header-inner">
+          <div class="results-file-info">
+            <div class="results-file-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div>
+              <div class="results-file-name" id="results-filename">resume.pdf</div>
+              <div class="results-file-meta" id="results-meta">Analyzed just now</div>
+            </div>
+          </div>
+          <div class="results-actions">
+            <button class="btn btn-secondary btn-sm" id="analyze-again-btn" aria-label="Analyze a different resume">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              New Analysis
+            </button>
+            <button class="btn btn-primary btn-sm" id="download-pdf-btn" aria-label="Download analysis as PDF">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="container" id="results-content">
+
+      <!-- ── Score Hero ── -->
+      <div class="score-hero" id="score-hero">
+
+        <!-- ATS Score Donut -->
+        <div class="ats-score-card animate-scale-in">
+          <div class="ats-canvas-wrap">
+            <canvas id="ats-canvas" aria-label="ATS Score donut chart" role="img"></canvas>
+          </div>
+          <div>
+            <div class="ats-label">ATS Compatibility Score</div>
+            <div style="margin-top:var(--sp-3)">
+              <div id="ats-verdict" style="font-size:var(--fs-sm);color:var(--txt-secondary);line-height:1.6;max-width:220px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade Card -->
+        <div class="grade-card animate-scale-in delay-100">
+          <div class="grade-label">Overall Grade</div>
+          <div class="grade-display gradient-text font-display" id="grade-display" aria-label="Resume grade">A</div>
+          <div class="grade-desc" id="grade-desc">Your resume demonstrates strong fundamentals.</div>
+          <div style="margin-top:var(--sp-3)">
+            <span class="badge" id="grade-badge">Excellent</span>
+          </div>
+        </div>
+
+        <!-- Section Scores -->
+        <div class="section-scores-card animate-scale-in delay-200">
+          <div class="section-scores-title">Section Breakdown</div>
+          <div id="section-scores-chart" aria-label="Section scores breakdown"></div>
+        </div>
+
+      </div>
+
+      <!-- ── Results Grid ── -->
+      <div class="results-grid" id="results-grid">
+
+        <!-- Strengths -->
+        <div class="card animate-fade-up delay-100" aria-labelledby="strengths-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--clr-success-bg);color:var(--clr-success)" aria-hidden="true">💪</div>
+              <h2 class="card-title" id="strengths-title">Strengths</h2>
+            </div>
+            <span class="badge badge-success" id="strengths-count" aria-label="Number of strengths">4 found</span>
+          </div>
+          <div id="strengths-list" role="list" aria-label="Resume strengths"></div>
+        </div>
+
+        <!-- Weaknesses -->
+        <div class="card animate-fade-up delay-200" aria-labelledby="weaknesses-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--clr-danger-bg);color:var(--clr-danger)" aria-hidden="true">⚠️</div>
+              <h2 class="card-title" id="weaknesses-title">Weaknesses</h2>
+            </div>
+            <span class="badge badge-danger" id="weaknesses-count" aria-label="Number of weaknesses">3 found</span>
+          </div>
+          <div id="weaknesses-list" role="list" aria-label="Resume weaknesses"></div>
+        </div>
+
+        <!-- Missing Skills -->
+        <div class="card animate-fade-up delay-300" aria-labelledby="skills-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--clr-warning-bg);color:var(--clr-warning)" aria-hidden="true">🎯</div>
+              <h2 class="card-title" id="skills-title">Missing Skills</h2>
+            </div>
+            <span class="badge badge-warning" id="skills-count" aria-label="Number of missing skills">6 skills</span>
+          </div>
+          <p style="font-size:var(--fs-sm);color:var(--txt-muted);margin-bottom:var(--sp-4)">Add these in-demand skills to improve your ATS score and appeal to more recruiters.</p>
+          <div class="skills-grid" id="skills-grid" role="list" aria-label="Missing skills"></div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="card animate-fade-up delay-200" aria-labelledby="keywords-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--clr-info-bg);color:var(--clr-info)" aria-hidden="true">🔑</div>
+              <h2 class="card-title" id="keywords-title">Keyword Analysis</h2>
+            </div>
+          </div>
+          <div class="keyword-density-wrap" id="keyword-density" aria-label="Keyword density visualization"></div>
+          <div class="keywords-section">
+            <div>
+              <div class="keywords-group-title">
+                <span style="color:var(--clr-success)" aria-hidden="true">✓</span> Present Keywords
+              </div>
+              <div class="keywords-wrap" id="present-keywords" role="list" aria-label="Present keywords"></div>
+            </div>
+            <div>
+              <div class="keywords-group-title">
+                <span style="color:var(--clr-danger)" aria-hidden="true">✗</span> Missing Keywords
+              </div>
+              <div class="keywords-wrap" id="missing-keywords" role="list" aria-label="Missing keywords"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grammar & Formatting — full width -->
+        <div class="card results-full animate-fade-up delay-300" aria-labelledby="grammar-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--clr-primary-10);color:var(--clr-primary-light)" aria-hidden="true">✏️</div>
+              <h2 class="card-title" id="grammar-title">Grammar & Formatting Issues</h2>
+            </div>
+            <span class="badge badge-primary" id="grammar-count" aria-label="Number of issues">5 issues</span>
+          </div>
+          <div class="grammar-list" id="grammar-list" role="list" aria-label="Grammar and formatting issues"></div>
+        </div>
+
+        <!-- Recruiter Feedback — full width -->
+        <div class="card recruiter-card results-full animate-fade-up delay-100" aria-labelledby="recruiter-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--gradient-primary);color:white" aria-hidden="true">💬</div>
+              <h2 class="card-title" id="recruiter-title">Recruiter Feedback</h2>
+            </div>
+            <span class="badge badge-primary">AI Simulated</span>
+          </div>
+          <div id="recruiter-feedback-content" aria-label="Recruiter feedback"></div>
+        </div>
+
+        <!-- Improvement Tips — full width -->
+        <div class="card results-full animate-fade-up delay-200" aria-labelledby="tips-title">
+          <div class="card-header">
+            <div class="section-label">
+              <div class="card-header-icon" style="background:var(--gradient-primary);color:white" aria-hidden="true">✨</div>
+              <h2 class="card-title" id="tips-title">Actionable Improvement Tips</h2>
+            </div>
+            <span class="badge badge-primary" id="tips-count" aria-label="Number of tips">6 tips</span>
+          </div>
+          <div class="tips-list" id="tips-list" role="list" aria-label="Improvement tips"></div>
+        </div>
+
+      </div>
+
+      <!-- Analyze Again -->
+      <div class="analyze-again-bar">
+        <button class="btn btn-secondary" id="analyze-again-btn-bottom" aria-label="Analyze a different resume">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+          Analyze Another Resume
+        </button>
+      </div>
+
+    </div><!-- /results-content -->
+  </div><!-- /results-screen -->
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
